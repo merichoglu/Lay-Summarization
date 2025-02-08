@@ -1,0 +1,9 @@
+{
+    "model_dir": "llama_instr_fine_tuned",
+    "test_file": "prepared_data/test_prepared.json",
+    "output_file": "generated_summaries.json",
+    "access_token": "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",
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "max_new_tokens": 1024
+}
