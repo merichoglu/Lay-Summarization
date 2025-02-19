@@ -1,10 +1,8 @@
 import os
 import json
-import warnings
-import torch
 from datasets import load_dataset, Dataset, DatasetDict
-from transformers import AutoModelForCausalLM, AutoTokenizer, HfArgumentParser, set_seed
-from trl import RewardTrainer, RewardConfig, ScriptArguments, get_peft_config
+from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
+from trl import RewardTrainer, RewardConfig, get_peft_config
 
 
 def load_config(config_path):
@@ -28,74 +26,55 @@ def load_data(data_dir, train_fraction=1.0):
     return DatasetDict(datasets)
 
 
-def reward_function(generated_summary, mesh_terms):
+def generate_preference_pair(example):
     """
-    A simple reward function that returns a score based on the presence of MeSH terms.
-    For each MeSH term present in the generated summary, add a fixed reward.
+    Generate an implicit preference pair from a PLOS article entry.
+    The "summary" field is used as the chosen (preferred) response.
+    A simple heuristic is used to create a rejected response by removing the last sentence.
     """
-    reward = 0.0
-    for term in mesh_terms:
-        if term.lower() in generated_summary.lower():
-            reward += 1.0
-    return reward
-
-
-def preprocess_for_reward(example, tokenizer, max_length):
-    """
-    Prepares an example for reward training.
-    This function builds a prompt from title, abstract, and mesh_terms,
-    then appends the summary. If the summary is a list, it is joined into a single string.
-    """
-    instruction = "generate a lay summary of the following scientific article."
-    title = example.get("title", "").strip()
-    abstract_val = example.get("abstract", "")
-    abstract = (
-        " ".join(abstract_val)
-        if isinstance(abstract_val, list)
-        else abstract_val.strip()
-    )
-    mesh_terms = example.get("mesh_terms", [])
-    input_field = (
-        f"Title: {title}\nAbstract: {abstract}\nMeSH Terms: {', '.join(mesh_terms)}\n"
-    )
-    prompt = f"### Instruction:\n{instruction}\n\n### Input:\n{input_field}\n\n### Response:\n"
-
-    # Handle summary being a list or a string
     summary = example.get("summary", "")
     if isinstance(summary, list):
-        summary = " ".join(summary)
+        summary_text = " ".join(summary).strip()
+    else:
+        summary_text = summary.strip()
+    # Split into sentences using a simple period-based split.
+    sentences = [s.strip() for s in summary_text.split(".") if s.strip()]
+    if len(sentences) > 1:
+        rejected_text = ". ".join(sentences[:-1]).strip() + "."
+    else:
+        rejected_text = summary_text
+    return {"chosen": summary_text, "rejected": rejected_text}
 
-    full_text = prompt + summary
 
-    tokenized_full = tokenizer(
-        full_text,
+def preprocess_preference_example(example, tokenizer, max_length):
+    """
+    Converts an example into tokenized candidate responses.
+    Returns a dict with keys:
+      - "input_ids_chosen", "attention_mask_chosen"
+      - "input_ids_rejected", "attention_mask_rejected"
+    """
+    pair = generate_preference_pair(example)
+    tokenized_chosen = tokenizer(
+        pair["chosen"],
         max_length=max_length,
         padding="max_length",
         truncation=True,
     )
-    tokenized_prompt = tokenizer(
-        prompt,
+    tokenized_rejected = tokenizer(
+        pair["rejected"],
         max_length=max_length,
         padding="max_length",
         truncation=True,
     )
-    input_ids = tokenized_full["input_ids"]
-    attention_mask = tokenized_full["attention_mask"]
-    prompt_len = sum(tokenized_prompt["attention_mask"])
-    labels = tokenized_full["input_ids"].copy()
-    for i in range(prompt_len - 1):
-        labels[i] = -100
     return {
-        "input_ids": input_ids,
-        "attention_mask": attention_mask,
-        "labels": labels,
-        "prompt": prompt,
-        "mesh_terms": mesh_terms,
+        "input_ids_chosen": tokenized_chosen["input_ids"],
+        "attention_mask_chosen": tokenized_chosen["attention_mask"],
+        "input_ids_rejected": tokenized_rejected["input_ids"],
+        "attention_mask_rejected": tokenized_rejected["attention_mask"],
     }
 
 
 if __name__ == "__main__":
-    # Load configuration
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -112,10 +91,11 @@ if __name__ == "__main__":
 
     set_seed(config["seed"])
 
-    # Load tokenizer and finetuned model.
+    print("Loading tokenizer...")
     tokenizer = AutoTokenizer.from_pretrained(
         config["model_name_or_path"], token=config["access_token"]
     )
+    print("Loading finetuned model from:", config["finetuned_model_dir"])
     model = AutoModelForCausalLM.from_pretrained(
         config["finetuned_model_dir"], token=config["access_token"]
     )
@@ -128,7 +108,7 @@ if __name__ == "__main__":
     )
 
     print("Preprocessing dataset for reward modeling...")
-    preprocess_fn = lambda x: preprocess_for_reward(
+    preprocess_fn = lambda x: preprocess_preference_example(
         x, tokenizer, config["max_seq_length"]
     )
     tokenized_datasets = raw_datasets.map(preprocess_fn, batched=False)
@@ -153,6 +133,7 @@ if __name__ == "__main__":
     if config.get("use_peft", False):
         peft_config = get_peft_config(config)
 
+    print("Initializing RewardTrainer...")
     trainer = RewardTrainer(
         model=model,
         processing_class=tokenizer,
@@ -169,7 +150,7 @@ if __name__ == "__main__":
     print("Starting reward model fine-tuning...")
     trainer.train()
 
-    print("Saving reward-finetuned model...")
+    print("Saving reward-finetuned model to:", reward_training_args.output_dir)
     trainer.save_model(reward_training_args.output_dir)
     tokenizer.save_pretrained(reward_training_args.output_dir)
     print("Reward modeling complete!")
