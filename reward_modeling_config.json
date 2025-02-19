@@ -1,0 +1,17 @@
+{
+    "model_name_or_path": "meta-llama/Llama-3.2-1B-Instruct",
+    "finetuned_model_dir": "llama_instr_fine_tuned",
+    "data_dir": "prepared_data",
+    "output_dir": "llama_reward_model_fine_tuned",
+    "access_token": "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",
+    "max_seq_length": 1024,
+    "batch_size": 2,
+    "learning_rate": 5e-5,
+    "num_train_epochs": 3,
+    "seed": 42,
+    "train_fraction": 1,
+    "logging_steps": 25,
+    "eval_steps": 50,
+    "center_rewards_coefficient": 0.01,
+    "use_peft": false
+}
