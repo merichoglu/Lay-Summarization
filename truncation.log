@@ -1,0 +1,13 @@
+✅ Processed train: 21409 samples
+📊 Truncated Samples: 0 (0.00%)
+📏 Max Length: 1499, Avg Length: 738.88, Avg Prompt Length: 504.86
+📁 Stats saved to: token_stats/train_stats.json
+✅ Processed val: 1210 samples
+📊 Truncated Samples: 0 (0.00%)
+📏 Max Length: 1337, Avg Length: 743.20, Avg Prompt Length: 508.08
+📁 Stats saved to: token_stats/val_stats.json
+✅ Processed test: 1218 samples
+📊 Truncated Samples: 0 (0.00%)
+📏 Max Length: 1224, Avg Length: 742.32, Avg Prompt Length: 508.68
+📁 Stats saved to: token_stats/test_stats.json
+🎯 All datasets processed. Results stored in 'token_stats/' folder.

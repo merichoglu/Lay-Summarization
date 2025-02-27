@@ -1,0 +1,8 @@
+{
+    "total_samples": 21409,
+    "truncated_samples": 0,
+    "truncation_ratio (%)": 0.0,
+    "max_token_length": 1499,
+    "average_token_length": 738.88,
+    "average_prompt_length": 504.86
+}
