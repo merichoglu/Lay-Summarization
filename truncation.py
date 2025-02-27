@@ -15,11 +15,9 @@ if tokenizer.pad_token is None:
 # Model's max context length
 context_length = 128000  # 128k tokens
 
-# Folder for storing results
 output_dir = "token_stats"
 os.makedirs(output_dir, exist_ok=True)
 
-# Dataset files to process
 datasets = {
     "train": "prepared_data/train_prepared.json",
     "val": "prepared_data/val_prepared.json",
@@ -33,7 +31,7 @@ def process_dataset(dataset_name, file_path):
     # Read entire JSON file as a list
     with open(file_path, "r", encoding="utf-8") as f:
         try:
-            dataset = json.load(f)  # Load as JSON array
+            dataset = json.load(f)
         except json.JSONDecodeError as e:
             print(f"❌ Error: Could not load {dataset_name} due to malformed JSON: {e}")
             return
@@ -69,19 +67,15 @@ def process_dataset(dataset_name, file_path):
             f"Title: {title}\nMeSH Terms: {mesh_terms}\nAbstract: {abstract}\n"
         )
 
-        # Get expected summary output
         summary = data.get("summary", [])
         output_text = " ".join(summary) if isinstance(summary, list) else summary
 
-        # Construct the full prompt
         prompt = f"{instruction}\n\n{input_field}"
         full_text = prompt + output_text
 
-        # Ensure EOS token is appended
         if not full_text.endswith(tokenizer.eos_token):
             full_text += tokenizer.eos_token
 
-        # Tokenize full input (prompt + output)
         tokenized_full = tokenizer(
             full_text,
             max_length=context_length,
@@ -90,7 +84,7 @@ def process_dataset(dataset_name, file_path):
         )
         token_length = sum(tokenized_full["attention_mask"])  # Count non-padding tokens
 
-        # Tokenize just the prompt to determine its length
+        # tokenize prompt to get its length
         tokenized_prompt = tokenizer(
             prompt,
             max_length=context_length,
@@ -99,7 +93,6 @@ def process_dataset(dataset_name, file_path):
         )
         prompt_len = sum(tokenized_prompt["attention_mask"])  # Count non-padding tokens
 
-        # Store statistics
         token_lengths.append(token_length)
         prompt_lengths.append(prompt_len)
 
