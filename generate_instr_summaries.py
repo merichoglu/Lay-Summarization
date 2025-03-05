@@ -58,17 +58,20 @@ def format_instruction_input(example: dict) -> dict:
         if isinstance(abstract_val, list)
         else abstract_val.strip()
     )
-    mesh_terms_list = example.get("mesh_terms", [])
-    mesh_terms = ", ".join(mesh_terms_list)
+    #mesh_terms_list = example.get("mesh_terms", [])
+    #mesh_terms = ", ".join(mesh_terms_list)
 
     # Adjust instruction based on MeSH terms.
+    """
     if mesh_terms:
         instruction = f"Generate a lay summary of the following scientific article, emphasizing these MeSH terms: {mesh_terms}."
     else:
         instruction = "Generate a lay summary of the following scientific article."
-
+    """
+    instruction = "Generate a lay summary of the following scientific article."
     # Reorder the input field to highlight MeSH terms.
-    input_field = f"Title: {title}\nMeSH Terms: {mesh_terms}\nAbstract: {abstract}\n"
+    # input_field = f"Title: {title}\nMeSH Terms: {mesh_terms}\nAbstract: {abstract}\n"
+    input_field = f"Title: {title}\nAbstract: {abstract}\n"
     prompt = PROMPT_DICT["prompt_input"].format(
         instruction=instruction, input=input_field
     )

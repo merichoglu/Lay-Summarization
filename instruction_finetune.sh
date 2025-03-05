@@ -7,7 +7,7 @@
 #SBATCH --mem=48G
 #SBATCH --time=48:00:00
 #SBATCH -A cis230089p
-#SBATCH --output=instr_finetune_output_with_new_prompt.log
+#SBATCH --output=instr_finetune_output_no_mesh.log
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=meric.haliloglu@metu.edu.tr
 

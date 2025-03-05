@@ -7,7 +7,7 @@
 #SBATCH --mem=32G
 #SBATCH --time=18:00:00
 #SBATCH -A cis230089p
-#SBATCH --output=generate_instr_output_with_new_prompt.log
+#SBATCH --output=generate_instr_output_no_mesh.log
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=meric.haliloglu@metu.edu.tr
 
