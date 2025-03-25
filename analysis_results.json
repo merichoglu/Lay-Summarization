@@ -1,0 +1,10 @@
+{
+    "total_samples": 1218,
+    "max_input_token_length": 864,
+    "avg_input_token_length": 473.7914614121511,
+    "max_output_token_length": 4097,
+    "avg_output_token_length": 571.0812807881773,
+    "total_truncated_samples": 0,
+    "total_truncated_tokens": 0,
+    "max_truncated_tokens": 0
+}
