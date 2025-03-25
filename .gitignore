@@ -1,0 +1,5 @@
+llama_instr_fine_tuned/
+llama_instr_fine_tuned_with_new_prompt/
+llama_instr_fine_tuned_no_mesh/
+prepared_data/
+*_config.jsoninstr_finetune_output_no_mesh.log
